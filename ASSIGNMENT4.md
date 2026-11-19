@@ -165,8 +165,12 @@ The model/unit tests use temporary synthetic checkpoints to check code behavior;
 do not replace the included trained weights. The included epoch-10 models
 are also checked separately through the FastAPI routes with default sampling
 steps. These checks validate execution and PNG responses, not image realism.
-Docker instructions are provided above; a local API check alone is not a
-Docker execution test.
+On November 19, 2026, the Dockerfile was also built successfully and the Linux
+container was tested through host port 8002. Both generators returned HTTP
+200 and valid RGB PNG grids for four samples at their default 60/20 steps.
+Invalid sample counts and step limits returned HTTP 422. Container logs
+confirmed the requests and the service remained running. See
+[the saved verification results](docs/assignment4-docker/verification.json).
 
 ## Submission contents
 

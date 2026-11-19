@@ -1,0 +1,36 @@
+{
+  "checked_at": "2026-11-19T05:12:19.944866+00:00",
+  "base_url": "http://127.0.0.1:8002",
+  "image_tag": "genai-ass4:verified",
+  "health": "ok",
+  "results": [
+    {
+      "endpoint": "/generate-energy",
+      "num_samples": 4,
+      "steps": 60,
+      "status": 200,
+      "content_type": "image/png",
+      "image_size": [
+        138,
+        36
+      ],
+      "bytes": 12339,
+      "seconds": 1.485,
+      "invalid_query_status": 422
+    },
+    {
+      "endpoint": "/generate-diffusion",
+      "num_samples": 4,
+      "steps": 20,
+      "status": 200,
+      "content_type": "image/png",
+      "image_size": [
+        138,
+        36
+      ],
+      "bytes": 9098,
+      "seconds": 1.439,
+      "invalid_query_status": 422
+    }
+  ]
+}

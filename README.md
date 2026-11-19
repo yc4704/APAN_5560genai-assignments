@@ -434,5 +434,22 @@ These route tests used FastAPI TestClient and one generated image per request.
 Use `curl.exe` in Windows PowerShell. Restart a running API after replacing
 its cached model weights. See [ASSIGNMENT4.md](ASSIGNMENT4.md) for checkpoint
 recreation, API tests, and Docker instructions. Theory questions 1-9 are
-submitted separately. Local API verification does not establish a public
-hosted deployment or a Docker execution result.
+submitted separately.
+
+### Docker Verification
+
+On November 19, 2026, the repository Dockerfile built successfully as
+`genai-ass4:verified`. A Linux container was started with host port 8002
+mapped to container port 80, and actual HTTP requests were sent from the host.
+
+| Request | Result |
+| --- | --- |
+| GET /health | HTTP 200, status ok |
+| GET /generate-energy?num_samples=4&steps=60 | HTTP 200, valid RGB PNG containing four samples |
+| GET /generate-diffusion?num_samples=4&steps=20 | HTTP 200, valid RGB PNG containing four samples |
+| Either generator with num_samples=0 or steps=201 | HTTP 422 |
+
+Both image responses decoded successfully as 138 x 36 pixel grids, including
+padding. This verifies container execution and API behavior, not image realism
+or public internet hosting. The response files and machine-readable results
+are in [docs/assignment4-docker](docs/assignment4-docker).
