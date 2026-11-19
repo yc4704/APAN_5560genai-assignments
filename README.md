@@ -3,6 +3,10 @@
 This repository contains the cumulative coursework for APAN 5560.
 Assignment 2 extends the FastAPI application developed in Assignment 1.
 Assignment 3 adds MNIST digit generation using a trained GAN.
+Assignment 4 includes executed CIFAR-10 energy and diffusion notebooks,
+with sampling-step comparisons and optional continuation experiments.
+The Assignment 4 API integration has been prepared locally but is not yet
+included in this repository; see the submission status below.
 
 ## Assignment Overview
 
@@ -11,6 +15,7 @@ Assignment 3 adds MNIST digit generation using a trained GAN.
 | Assignment 1 | Bigram text generation and spaCy word embeddings | POST /generate, POST /embedding |
 | Assignment 2 | CNN trained on CIFAR-10, with saved weights and Docker deployment | POST /predict-image |
 | Assignment 3 | MNIST GAN with saved generator weights and Docker inference | GET /generate-digits |
+| Assignment 4 | Executed CIFAR-10 energy and diffusion notebooks, with supplementary experiments | Local integration only; not yet published |
 
 For Assignment 2, see the "Assignment 2: CIFAR-10 Image Classification"
 section below for the architecture, training results, and Docker commands.
@@ -31,7 +36,7 @@ A FastAPI application demonstrating bigram text generation and spaCy word embedd
 
 - Run locally or inside a Docker container.
 
-## Project Structure
+## Assignment 1 Project Structure
 
 ```text
 APAN_5560genai/
@@ -310,3 +315,117 @@ fresh or resumed run is not guaranteed to reproduce the saved images exactly.
 This repository covers the implementation and deployment portions of
 Assignment 3. The conceptual and calculation answers are submitted separately.
 
+
+## Assignment 4: CIFAR-10 Energy and Diffusion Models
+
+Train two unconditional generators on native 32 x 32 RGB CIFAR-10 images.
+Both methods use 45,000 training images, 5,000 validation images, and the
+separate 10,000-image test split. Class labels are not used for generation.
+
+### Main and Supplementary Notebooks
+
+| Role | Notebook | Purpose |
+| --- | --- | --- |
+| Main | [Energy model](Assignment4_CIFAR10_Energy.ipynb) | Complete 10-epoch training experiment, diagnostics, sampling comparison, and API export code |
+| Main | [Diffusion model](Assignment4_CIFAR10_Diffusion.ipynb) | Complete 10-epoch experiment trained from scratch at learning rate 0.0001, evaluation, sampling comparison, export, and local API installation code |
+| Supplement | [Energy continuation](Assignment4_CIFAR10_Energy_Continue_to_20.ipynb) | Restore epoch 10 and train epochs 11–20; inspect the effect of additional training |
+| Supplement | [Diffusion continuation](Assignment4_CIFAR10_Diffusion_Continue_to_20.ipynb) | Restore epoch 10 and train epochs 11–20; compare checkpoints and sampling settings |
+
+Start with the two main notebooks; neither training experiment requires
+running the other method first. The supplementary notebooks are optional
+and require their respective saved epoch-10 checkpoints. All four files
+include code, English Markdown explanations, and saved outputs for review.
+
+In both main notebooks, Section 10 compares sampling steps, after the
+learning-curve analysis and before export/API sections. In both supplements,
+Section 5 compares epochs 10 and 20, and Section 6 compares sampling steps.
+Execution counts reflect the original runs; some cells were subsequently
+reordered for presentation without rerunning training.
+
+### Methods and Settings
+
+| Setting | Energy model | Diffusion model |
+| --- | --- | --- |
+| Main experiment | 10 epochs | 10 epochs from random initialization |
+| Learning rate | 0.0001 | 0.0001 throughout |
+| Batch size | 128 | 64 |
+| Image preprocessing | Map pixels to [-1, 1] | Load pixels in [0, 1]; standardize inside the model using training-set channel statistics |
+| Network | Convolutional scalar-energy network with Swish activations | Residual UNet with sinusoidal noise-level embedding |
+| Training | Contrastive energy objective, squared-energy regularization, replay buffer | Noise-prediction MSE, offset cosine schedule, EMA decay 0.8 |
+| Default generation | 60 Langevin steps | 20 reverse-diffusion steps |
+| Sampling comparison | 60, 200, 500 steps | 20, 50, 100 steps |
+
+Each sampling comparison uses fixed model weights and matched initial noise.
+Energy also fixes the random seed for its stochastic Langevin updates.
+The two methods' step counts and loss values are not directly comparable.
+
+### Observed Results
+
+| Experiment | Observation |
+| --- | --- |
+| Energy, 10 epochs | Real images receive lower energy than uniform random noise, but generated samples are dominated by colored textures and grid-like patterns. |
+| Energy, continuation to 20 epochs | The real-versus-random energy gap increases in magnitude, without a clear visual improvement in the inspected samples. |
+| Diffusion, 10 epochs | Training remains numerically stable. Validation noise MSE decreases from 0.09166 to 0.05951; epoch 10 is selected, with test noise MSE 0.05971. Images show coarse spatial structure, but most objects remain hard to identify. |
+| Diffusion, continuation to 20 epochs | Best validation noise MSE is 0.05795 at epoch 16; its test noise MSE is 0.05730. Epoch 20 has validation MSE 0.05836. The supplementary export uses epoch 16, while the epoch-10/20 comparison uses those exact two checkpoints. |
+
+For the four inspected diffusion samples at epochs 10 and 20, increasing
+sampling from 20 to 50 or 100 steps changes local colors and edges but does
+not clearly improve object recognizability. Additional training modestly
+improves the best observed validation MSE, without establishing a clear
+improvement in visual realism.
+
+These are qualitative, experiment-specific findings, not a general ranking
+of Energy and Diffusion. An energy gap against uniform noise does not measure
+image realism, and lower noise-prediction MSE does not guarantee better-looking
+samples. Validation/test MSE uses randomly sampled noise and times; small
+differences have not been tested for statistical significance. The test set
+was inspected during both the baseline and continuation experiments, so the
+continuation result is exploratory rather than an untouched final test.
+
+### Review and Reproduction
+
+Saved outputs can be reviewed on GitHub without running training. For local
+execution, use PyTorch, torchvision, NumPy, Matplotlib, tqdm, and Jupyter;
+API sections additionally require the application dependencies and helper
+modules. Select the kernel for that environment. The saved RTX 4060 kernel
+name refers to the author's machine; other machines should select their own
+compatible kernel. CUDA is used when available, otherwise execution uses CPU.
+
+Run the main training cells from top to bottom. CIFAR-10 is downloaded if
+absent. The notebooks locate the project using app/main.py. New experiments
+write to timestamped directories under ../ASS4/outputs relative to the
+repository root. Repeated runs can differ because all sources of randomness
+are not guaranteed to be identical.
+
+The continuation notebooks contain RESUME_PATH values from the author's
+Windows environment. Their epoch-10 checkpoints are not included in this
+commit. To reproduce continuation, first complete the corresponding main
+experiment, preserve its epoch-10 checkpoint, and set RESUME_PATH to that
+file. Merely opening the supplementary notebook does not require a checkpoint;
+executing its restore/training cells does.
+
+### API and Submission Status
+
+**Currently published:** the four executed notebooks and this README.
+**Not yet published for Assignment 4:** the reusable model helpers, API service
+modules and route changes, inference weights, and resumable checkpoints.
+The notebook API cells describe the local integration and cannot be executed
+end to end from this repository snapshot alone. Assignment 1–3 API code and
+artifacts remain available as documented above.
+
+The selected main experiments use the 10-epoch Energy and 10-epoch Diffusion
+weights. The 20-epoch experiments are supplementary and keep their exports
+separate. Locally, the Assignment 4 API reads:
+
+- models/cifar10_energy.pth for GET /generate-energy?num_samples=4&steps=60
+- models/cifar10_diffusion.pth for GET /generate-diffusion?num_samples=4&steps=20
+
+These endpoints are not yet present in the published app/main.py. The local
+Diffusion endpoint has been checked with the epoch-10 weights and returned
+HTTP 200 with a PNG response; this does not establish a published or Docker
+deployment. Restart a running API after replacing its cached model weights.
+
+Completing the Assignment 4 deployment submission still requires publishing
+the supporting code and providing the selected weights or a documented way
+to obtain them, then verifying the intended deployment. Theory questions
+1–9 are separate from these training notebooks.
