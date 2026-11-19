@@ -33,3 +33,6 @@ outputs/gan_20261027_224535/samples/*
 !outputs/gan_20261027_224535/samples/epoch_*.png
 outputs/gan_20261027_224535/checkpoints/*
 !outputs/gan_20261027_224535/checkpoints/gan_epoch_010.pth
+
+# Full Assignment 4 training states; recreate as documented in ASSIGNMENT4.md
+checkpoints/assignment4/

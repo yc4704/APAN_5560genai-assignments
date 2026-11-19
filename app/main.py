@@ -8,14 +8,16 @@ from app.bigram_model import BigramModel
 from app.cnn_service import predict_image
 from app.embedding_model import calculate_embedding
 from app.gan_service import generate_digits
+from app.energy_service import generate_energy_images
+from app.diffusion_service import generate_diffusion_images
 
 app = FastAPI(
     title="Applied Generative AI API",
     description=(
         "A FastAPI service for text generation, "
-        "word embeddings, and CIFAR-10 image classification."
+        "word embeddings, CIFAR-10 classification, and GAN, EBM, and diffusion image generation."
     ),
-    version="2.0.0",
+    version="4.0.0",
 )
 
 
@@ -124,3 +126,27 @@ def generate_digit_images(
         content=image_bytes,
         media_type="image/png",
     )
+
+
+@app.get("/generate-energy")
+def generate_energy(
+    num_samples: int = Query(default=16, ge=1, le=16),
+    steps: int = Query(default=60, ge=1, le=200),
+):
+    try:
+        image_bytes = generate_energy_images(num_samples, steps)
+    except FileNotFoundError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+    return Response(content=image_bytes, media_type="image/png")
+
+
+@app.get("/generate-diffusion")
+def generate_diffusion(
+    num_samples: int = Query(default=16, ge=1, le=16),
+    steps: int = Query(default=20, ge=1, le=200),
+):
+    try:
+        image_bytes = generate_diffusion_images(num_samples, steps)
+    except FileNotFoundError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+    return Response(content=image_bytes, media_type="image/png")

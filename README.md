@@ -5,8 +5,8 @@ Assignment 2 extends the FastAPI application developed in Assignment 1.
 Assignment 3 adds MNIST digit generation using a trained GAN.
 Assignment 4 includes executed CIFAR-10 energy and diffusion notebooks,
 with sampling-step comparisons and optional continuation experiments.
-The Assignment 4 API integration has been prepared locally but is not yet
-included in this repository; see the submission status below.
+The Assignment 4 API helpers, services, routes, and selected 10-epoch
+inference weights are included; no retraining is needed to use the API.
 
 ## Assignment Overview
 
@@ -15,7 +15,7 @@ included in this repository; see the submission status below.
 | Assignment 1 | Bigram text generation and spaCy word embeddings | POST /generate, POST /embedding |
 | Assignment 2 | CNN trained on CIFAR-10, with saved weights and Docker deployment | POST /predict-image |
 | Assignment 3 | MNIST GAN with saved generator weights and Docker inference | GET /generate-digits |
-| Assignment 4 | Executed CIFAR-10 energy and diffusion notebooks, with supplementary experiments | Local integration only; not yet published |
+| Assignment 4 | Executed CIFAR-10 energy and diffusion notebooks, with supplementary experiments | GET /generate-energy, GET /generate-diffusion |
 
 For Assignment 2, see the "Assignment 2: CIFAR-10 Image Classification"
 section below for the architecture, training results, and Docker commands.
@@ -397,35 +397,42 @@ write to timestamped directories under ../ASS4/outputs relative to the
 repository root. Repeated runs can differ because all sources of randomness
 are not guaranteed to be identical.
 
-The continuation notebooks contain RESUME_PATH values from the author's
-Windows environment. Their epoch-10 checkpoints are not included in this
-commit. To reproduce continuation, first complete the corresponding main
-experiment, preserve its epoch-10 checkpoint, and set RESUME_PATH to that
-file. Merely opening the supplementary notebook does not require a checkpoint;
-executing its restore/training cells does.
+The continuation notebooks resolve configurable RESUME_PATH values relative
+to the repository root. Their default locations are
+`checkpoints/assignment4/energy_epoch_010.pth` and
+`checkpoints/assignment4/diffusion_epoch_010.pth`. Full training checkpoints
+are not tracked; recreate them using the main notebooks and the copy commands
+in [ASSIGNMENT4.md](ASSIGNMENT4.md#outputs-and-resuming). Inference weights
+do not contain optimizer/replay-buffer state and cannot replace these files.
+Both supplements create fresh timestamped output directories on every run.
+Their saved outputs retain the paths from the original recorded experiments.
 
 ### API and Submission Status
 
-**Currently published:** the four executed notebooks and this README.
-**Not yet published for Assignment 4:** the reusable model helpers, API service
-modules and route changes, inference weights, and resumable checkpoints.
-The notebook API cells describe the local integration and cannot be executed
-end to end from this repository snapshot alone. Assignment 1–3 API code and
-artifacts remain available as documented above.
+The four executed notebooks, reusable model helpers, API services and routes,
+and selected 10-epoch inference weights are included. The optional 20-epoch
+experiments retain separate exports and do not replace the API models.
 
-The selected main experiments use the 10-epoch Energy and 10-epoch Diffusion
-weights. The 20-epoch experiments are supplementary and keep their exports
-separate. Locally, the Assignment 4 API reads:
+| Endpoint | Included weights | Default steps |
+| --- | --- | --- |
+| GET /generate-energy | models/cifar10_energy.pth | 60 |
+| GET /generate-diffusion | models/cifar10_diffusion.pth | 20 |
 
-- models/cifar10_energy.pth for GET /generate-energy?num_samples=4&steps=60
-- models/cifar10_diffusion.pth for GET /generate-diffusion?num_samples=4&steps=20
+Both endpoints return PNG images and accept `num_samples` from 1 to 16 and
+`steps` from 1 to 200. Start the API using the local or Docker commands above.
+For example, with the local server on port 8000:
 
-These endpoints are not yet present in the published app/main.py. The local
-Diffusion endpoint has been checked with the epoch-10 weights and returned
-HTTP 200 with a PNG response; this does not establish a published or Docker
-deployment. Restart a running API after replacing its cached model weights.
+```bash
+curl --fail "http://127.0.0.1:8000/generate-energy?num_samples=4&steps=60" --output energy_samples.png
+curl --fail "http://127.0.0.1:8000/generate-diffusion?num_samples=4&steps=20" --output diffusion_samples.png
+```
 
-Completing the Assignment 4 deployment submission still requires publishing
-the supporting code and providing the selected weights or a documented way
-to obtain them, then verifying the intended deployment. Theory questions
-1–9 are separate from these training notebooks.
+All 12 model/API tests passed locally, including HTTP 200 and valid RGB PNG
+responses from both included epoch-10 models at their default sampling steps.
+These route tests used FastAPI TestClient and one generated image per request.
+
+Use `curl.exe` in Windows PowerShell. Restart a running API after replacing
+its cached model weights. See [ASSIGNMENT4.md](ASSIGNMENT4.md) for checkpoint
+recreation, API tests, and Docker instructions. Theory questions 1-9 are
+submitted separately. Local API verification does not establish a public
+hosted deployment or a Docker execution result.
